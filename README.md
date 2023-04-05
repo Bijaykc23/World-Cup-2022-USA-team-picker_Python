@@ -1,0 +1,3 @@
+# World-Cup-2022-USA-team-picker_Python
+
+This code selects the USA national soccer team players based on their season ratings for the 2022 World Cup. It uses various Python libraries such as Pandas, Selenium, BeautifulSoup, pandas_datareader, os, scrapy, and openpyxl. The code reads an Excel file that contains the team member's details, including their first name, last name, position, age, preferred foot, and club. The code then looks up the FOTMOB website for each player and finds their rating. If the player's rating is not available, the code assigns a default value of 5.0. The code then saves the ratings in the Excel file and sorts the players based on their positions and ratings. Finally, the code selects 26 players for the team based on their position and ratings.
