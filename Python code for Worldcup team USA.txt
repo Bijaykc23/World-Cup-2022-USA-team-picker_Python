@@ -1,0 +1,174 @@
+##picking the USA nation soccer players based on thier season rating for 2022 World Cup
+#Skills user:Pandas, Selenium,BeautifulSoup, pandas_datareader, os, scrapy, and openpyxl
+-----------------------------------------------------------------------------------------
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import requests
+import bs4
+import time
+from bs4 import BeautifulSoup
+import pandas_datareader as web
+import os
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.remote.webelement import WebElement
+from scrapy.selector import Selector
+from openpyxl import load_workbook
+
+#load excel file
+team_df =pd.read_excel("Team_Members.xlsx")
+
+#count the number of rows
+tot_rows = len(team_df)
+
+#loop to grab the name of each player and look for FOTMOB rating in FOTMOB website
+i=1
+while i <= tot_rows:
+    row_num = "l" + str (i+1)
+
+#get the name of each player 1 by 1
+    first_name = team_df["First_Name"].loc[i-1]
+    last_name = team_df["Last_Name"].loc[i-1]
+
+# opens chrome 
+    driver = webdriver.Chrome(os.getcwd() +"\chromedriver.exe")
+
+#opens whoscored website
+    driver.get('https://www.fotmob.com/')
+
+#locates searchbuttons
+    searchbox = driver.find_element(By.CLASS_NAME,"react-autosuggest__input")
+
+#clears searchbox
+    searchbox.clear()
+
+#delay time
+    time.sleep(1)
+
+#search for players first name
+    searchbox.send_keys(first_name)
+
+#put space in between name 
+    searchbox.send_keys(' ')
+
+#delay time
+    time.sleep(2)
+
+#search for players last name  
+    searchbox.send_keys(last_name)
+
+#delay time
+    time.sleep(2)
+
+#select the first suggestion
+    searchbox.send_keys(Keys.ARROW_DOWN)
+
+#press enter
+    searchbox.send_keys(Keys.RETURN)
+
+#disables notification
+    options = Options()
+    options.add_argument("--disable-notifications")
+
+#delay time
+    time.sleep(3)
+
+#grab the current url
+    URL=driver.current_url
+
+#delay time
+    time.sleep(3)
+
+#close the browser
+    driver.close()
+
+#converting source code and saving in URL
+    r = requests.get(URL)
+
+#grabs all the text from the SOURCE
+    soup = bs4.BeautifulSoup(r.text,'html.parser')
+
+#looks for rating on the website
+    divs=soup.find_all('span')
+
+# convert the result into string
+    res=str(divs)
+
+#find the string index
+    sub_index1=res.find('<span>FotMob rating</span>')+34
+    sub_index2=sub_index1+4
+
+#extracts the rating
+    rating=res[sub_index1:sub_index2]
+
+#if rating is not present in FOTmob website give 5.0 rating 
+    try:
+        re=float(rating)
+    except:
+        re= 5.0
+
+#saving the rating on excel file
+    workbook = load_workbook(filename="Team_Members.xlsx")
+    sheet = workbook.active
+    sheet[row_num] = float (re)
+    workbook.save(filename="Team_Members.xlsx")
+    print (first_name,last_name,re)
+    i+=1
+
+# reload excel file
+team_df =pd.read_excel("Team_Members.xlsx")
+
+#grab players by their position
+gk=team_df[team_df['Position'] == 'GK']
+cb=team_df[team_df['Position'] == 'CB']
+lb=team_df[team_df['Position'] == 'LB']
+rb=team_df[team_df['Position'] == 'RB']
+cdm=team_df[team_df['Position'] == 'CDM']
+cm=team_df[team_df['Position'] == 'CM']
+lw=team_df[team_df['Position'] == 'LW']
+rw=team_df[team_df['Position'] == 'RW']
+st=team_df[team_df['Position'] == 'ST']
+
+#shorting every postion by highest rating
+gks=gk.sort_values(by=['Adjusted_Rating'],ascending =False)
+cbs=cb.sort_values(by=['Adjusted_Rating'],ascending =False)
+rbs=rb.sort_values(by=['Adjusted_Rating'],ascending =False)
+lbs=lb.sort_values(by=['Adjusted_Rating'],ascending =False)
+cdms=cdm.sort_values(by=['Adjusted_Rating'],ascending =False)
+cms=cm.sort_values(by=['Adjusted_Rating'],ascending =False)
+lws=lw.sort_values(by=['Adjusted_Rating'],ascending =False)
+rws=rw.sort_values(by=['Adjusted_Rating'],ascending =False)
+sts=st.sort_values(by=['Adjusted_Rating'],ascending =False)
+
+# select 26 players for team
+gk3=gks[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:3] 
+cb4=cbs[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:4]
+lb2=lbs[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:2]
+rb2=rbs[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:2]
+cdm3=cdms[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:3]
+cm3=cms[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:3]
+rw4=rws[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:4]
+lw3=lws[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:3]
+st2=sts[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:2]
+
+#Create a single table of 26 members
+team26=gk3.append(cb4).append(lb2).append(rb2).append(cdm3).append(cm3).append(rw4).append(lw3).append(st2)
+
+# select start 11 players for team
+gk3=gks[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:1] 
+cb4=cbs[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:2]
+lb2=lbs[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:1]
+rb2=rbs[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:1]
+cdm3=cdms[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:1]
+cm3=cms[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:2]
+rw4=rws[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:1]
+lw3=lws[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:1]
+st2=sts[['Full Name','Position','Age','Preferred_Foot','Club','Adjusted_Rating']].iloc[0:1]
+
+#Create a single table of starting 11 team member
+team11=gk3.append(cb4).append(lb2).append(rb2).append(cdm3).append(cm3).append(rw4).append(lw3).append(st2)
+
+team26
+
+team11
